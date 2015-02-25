@@ -320,9 +320,10 @@ class DockerProxy(proxy.ReverseProxyResource):
             # Write the final response to the client.
             result_body = result["ModifiedServerResponse"]["Body"].encode("utf-8")
             log.msg('Writing result:\n%s' % result_body)
-
+            log.msg('Init headers:\n%s' % request.responseHeaders)
             request.write(result_body)
             request.finish()
+            log.msg('Finished headers:\n%s' % request.responseHeaders)
         d.addCallback(sendFinalResponseToClient)
         def squashNoPostHooks(failure):
             failure.trap(NoPostHooks)
