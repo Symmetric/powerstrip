@@ -15,14 +15,10 @@ import StringIO
 import json
 import treq
 import urlparse
-from twisted.python import log
 
-log.startLogging(open('powerstrip.log', 'a'))
-# _log = logging.basicConfig(
-#     level=logging.DEBUG,
-#     filename='powerstrip.log',
-#     format='%(asctime)s [%(levelname)s] %(filename)s.%(name)s %(lineno)d: %(message)s',
-# )
+from twisted.web import client
+client._HTTP11ClientFactory.noisy = False
+log.startLogging(open('powerstrip.log', 'w'))
 
 
 class NoPostHooks(Exception):
