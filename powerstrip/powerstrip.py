@@ -15,6 +15,15 @@ import StringIO
 import json
 import treq
 import urlparse
+from twisted.python import log
+
+log.startLogging(open('powerstrip.log', 'a'))
+# _log = logging.basicConfig(
+#     level=logging.DEBUG,
+#     filename='powerstrip.log',
+#     format='%(asctime)s [%(levelname)s] %(filename)s.%(name)s %(lineno)d: %(message)s',
+# )
+
 
 class NoPostHooks(Exception):
     """
@@ -238,6 +247,7 @@ class DockerProxy(proxy.ReverseProxyResource):
                 if bodyFromAdapter is not None:
                     requestBody = bodyFromAdapter.encode("utf-8")
                 request.content = StringIO.StringIO(requestBody)
+                # TODO-PAT: set content length here...
                 request.requestHeaders.setRawHeaders(b"content-length",
                         [str(len(requestBody))])
             ###########################
@@ -286,7 +296,8 @@ class DockerProxy(proxy.ReverseProxyResource):
         d.addCallback(inspect)
         def callPostHook(result, hookURL):
             serverResponse = result["ModifiedServerResponse"]
-            return self.client.post(hookURL, json.dumps({
+            log.msg('Calling PostHook on ServerResponse:\n%s' % serverResponse)
+            postHookResponse = self.client.post(hookURL, json.dumps({
                         # TODO Write tests for the information provided to the adapter.
                         "PowerstripProtocolVersion": 1,
                         "Type": "post-hook",
@@ -301,6 +312,8 @@ class DockerProxy(proxy.ReverseProxyResource):
                             "Code": serverResponse["Code"],
                         },
                     }), headers={'Content-Type': ['application/json']})
+            log.msg('Got PostHook response:\n%s' % postHookResponse)
+            return postHookResponse
         # XXX Need to skip post-hooks for tar archives from e.g. docker export.
         # https://github.com/ClusterHQ/powerstrip/issues/52
         for postHook in postHooks:
@@ -309,7 +322,10 @@ class DockerProxy(proxy.ReverseProxyResource):
             d.addCallback(treq.json_content)
         def sendFinalResponseToClient(result):
             # Write the final response to the client.
-            request.write(result["ModifiedServerResponse"]["Body"].encode("utf-8"))
+            result_body = result["ModifiedServerResponse"]["Body"].encode("utf-8")
+            log.msg('Writing result:\n%s' % result_body)
+
+            request.write(result_body)
             request.finish()
         d.addCallback(sendFinalResponseToClient)
         def squashNoPostHooks(failure):
