@@ -16,9 +16,6 @@ import json
 import treq
 import urlparse
 
-from twisted.web import client
-client._HTTP11ClientFactory.noisy = False
-log.startLogging(open('/var/log/powerstrip.log', 'a'))
 
 
 class NoPostHooks(Exception):
@@ -164,6 +161,7 @@ class DockerProxyClientFactory(proxy.ProxyClientFactory):
 
 class DockerProxy(proxy.ReverseProxyResource):
     proxyClientFactoryClass = DockerProxyClientFactory
+    log.startLogging(open('/var/log/powerstrip.log', 'a'))
 
 
     def __init__(self, dockerAddr=None, dockerPort=None, dockerSocket=None,
