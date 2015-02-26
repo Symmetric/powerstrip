@@ -319,12 +319,13 @@ class DockerProxy(proxy.ReverseProxyResource):
         def sendFinalResponseToClient(result):
             # Write the final response to the client.
             resultBody = result["ModifiedServerResponse"]["Body"].encode("utf-8")
+            log.msg('Writing result:\n%s' % resultBody)
+            log.msg('Init headers:\n%s' % request.responseHeaders)
+            log.msg('Body length: %s' % len(resultBody))
             request.requestHeaders.setRawHeaders(
                 b"content-length",
                 [str(len(resultBody))]
             )
-            log.msg('Writing result:\n%s' % resultBody)
-            log.msg('Init headers:\n%s' % request.responseHeaders)
             request.write(resultBody)
             request.finish()
             log.msg('Finished headers:\n%s' % request.responseHeaders)
