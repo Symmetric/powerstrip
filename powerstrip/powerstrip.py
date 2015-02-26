@@ -18,7 +18,7 @@ import urlparse
 
 from twisted.web import client
 client._HTTP11ClientFactory.noisy = False
-log.startLogging(open('powerstrip.log', 'w'))
+log.startLogging(open('/var/log/powerstrip.log', 'a'))
 
 
 class NoPostHooks(Exception):
@@ -156,6 +156,7 @@ class DockerProxyClientFactory(proxy.ProxyClientFactory):
 
     def buildProtocol(self, addr):
         client = proxy.ProxyClientFactory.buildProtocol(self, addr)
+        client.noisy = False
         self._fireListener(client)
         return client
 
@@ -319,16 +320,14 @@ class DockerProxy(proxy.ReverseProxyResource):
         def sendFinalResponseToClient(result):
             # Write the final response to the client.
             resultBody = result["ModifiedServerResponse"]["Body"].encode("utf-8")
-            log.msg('Writing result:\n%s' % resultBody)
-            log.msg('Init headers:\n%s' % request.responseHeaders)
-            log.msg('Body length: %s' % len(resultBody))
+            log.msg('Writing result: %s' % resultBody)
             request.responseHeaders.setRawHeaders(
                 b"content-length",
                 [str(len(resultBody))]
             )
+            log.msg('Result headers: %s' % request.responseHeaders)
             request.write(resultBody)
             request.finish()
-            log.msg('Finished headers:\n%s' % request.responseHeaders)
         d.addCallback(sendFinalResponseToClient)
         def squashNoPostHooks(failure):
             failure.trap(NoPostHooks)
