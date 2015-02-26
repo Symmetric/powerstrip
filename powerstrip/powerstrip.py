@@ -322,7 +322,7 @@ class DockerProxy(proxy.ReverseProxyResource):
             log.msg('Writing result:\n%s' % resultBody)
             log.msg('Init headers:\n%s' % request.responseHeaders)
             log.msg('Body length: %s' % len(resultBody))
-            request.requestHeaders.setRawHeaders(
+            request.responseHeaders.setRawHeaders(
                 b"content-length",
                 [str(len(resultBody))]
             )
